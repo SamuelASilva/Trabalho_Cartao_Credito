@@ -1,0 +1,189 @@
+----> 
+
+SQLs utilizados para criação do banco de dados, criação das tabelas e SQLs de manipulações utilizados pelo sistema.
+
+----> 
+
+
+-- CREATE DATABASE trab_cartaoCredito;
+
+CREATE TABLE tipoTransacao(
+	idtipo INT PRIMARY KEY AUTO_INCREMENT,
+	tipo VARCHAR(20)
+);
+
+CREATE TABLE estabelecimento(
+	idestabelecimento INT PRIMARY KEY AUTO_INCREMENT,
+	estabelecimento VARCHAR(60)
+);
+
+CREATE TABLE transacao(
+	idtransacao INT PRIMARY KEY AUTO_INCREMENT,
+	valor FLOAT,
+	valorPendente FLOAT,
+	valorPago FLOAT,
+	idtipo INT,
+	idestabelecimento INT,
+	idcartao INT,
+	
+	CONSTRAINT fk_transacao_tipo FOREIGN KEY (idtipo)
+		REFERENCES tipotransacao(idtipo),
+		
+	CONSTRAINT fk_transacao_estab FOREIGN KEY (idestabelecimento)
+		REFERENCES estabelecimento(idestabelecimento),
+		
+	CONSTRAINT fk_transacao_cartao FOREIGN KEY (idcartao)
+		REFERENCES cartao(idcartao)
+);
+
+CREATE TABLE pessoa(
+	idpessoa INT PRIMARY KEY AUTO_INCREMENT,
+	nome VARCHAR(60),
+	cpf CHAR(11),
+	anoNascimento INT,
+	salario FLOAT,
+	principal BOOL
+);
+
+CREATE TABLE dependente(
+	iddependente INT PRIMARY KEY AUTO_INCREMENT,
+	idpessoaPrinc INT,
+	idpessoaDepen INT,
+	
+	CONSTRAINT fk_pessoa_princ FOREIGN KEY (idpessoaPrinc)
+		REFERENCES pessoa(idpessoa),
+		
+	CONSTRAINT fk_pessoa_depen FOREIGN KEY (idpessoaDepen)
+		REFERENCES pessoa(idpessoa)
+);
+
+CREATE TABLE conta(
+	idconta INT PRIMARY KEY AUTO_INCREMENT,
+	numeroConta CHAR(8),
+	idpessoa INT,
+	
+	CONSTRAINT fk_conta_pessoa FOREIGN KEY (idpessoa)
+		REFERENCES pessoa(idpessoa)
+);
+
+CREATE TABLE cartao(
+	idcartao INT PRIMARY KEY AUTO_INCREMENT,
+	numeroCartao CHAR(16),
+	cvv CHAR(3),
+	dataEmissao DATE,
+	dataValidade DATE,
+	limite FLOAT,
+	saldo FLOAT,
+	idconta INT,
+	principal BOOL,
+	dependente BOOL,
+	
+	CONSTRAINT fk_cartao_conta FOREIGN KEY (idconta)
+		REFERENCES conta(idconta)
+);
+
+
+INSERT INTO tipotransacao(tipo)
+VALUES ('Compra');
+
+INSERT INTO tipotransacao(tipo)
+VALUES ('Pagamento');
+
+
+INSERT INTO estabelecimento(estabelecimento)
+VALUES ('Mercado Irineu');
+
+INSERT INTO estabelecimento(estabelecimento)
+VALUES ('Auto Posto Kathiau');
+
+INSERT INTO estabelecimento(estabelecimento)
+VALUES ('Spotify');
+
+INSERT INTO estabelecimento(estabelecimento)
+VALUES ('Netflix');
+
+INSERT INTO estabelecimento(estabelecimento)
+VALUES ('IFood');
+
+INSERT INTO estabelecimento(estabelecimento)
+VALUES ('E-Commerce Nike');
+
+
+SELECT * FROM cartao WHERE numeroCartao = ?;
+
+SELECT cp.numeroCartao FROM cartao AS cp 
+INNER JOIN conta AS c ON cp.idconta = c.idconta 
+INNER JOIN pessoa AS p ON c.idpessoa = p.idpessoa 
+WHERE p.cpf = ? AND dependente = TRUE;
+
+SELECT limite FROM cartao WHERE numeroCartao = ?;
+
+SELECT saldo FROM cartao WHERE numeroCartao = ?;
+
+INSERT INTO cartao(numeroCartao, cvv, dataEmissao, dataValidade, limite, saldo, idconta, principal, dependente)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+DELETE FROM cartao WHERE numeroCartao = ?;
+
+SELECT * FROM conta WHERE numeroConta = ?;
+
+SELECT * FROM conta AS c
+INNER JOIN pessoa AS p ON c.idpessoa = p.idpessoa
+WHERE p.cpf = ?;
+
+INSERT INTO conta(numeroConta, idpessoa) VALUES (? ,?);
+
+DELETE FROM conta WHERE numeroConta = ?;
+
+SELECT
+	pDepe.idpessoa AS idPDepen,
+	pPrin.idpessoa AS idPPrinc
+FROM dependente AS d
+INNER JOIN pessoa AS pPrin ON d.idpessoaPrinc = pPrin.idpessoa
+INNER JOIN pessoa AS pDepe ON d.idpessoaDepen = pDepe.idpessoa
+WHERE pPrin.cpf = ?;
+
+SELECT 
+	Prin.cpf AS cpfPPrinc 
+FROM dependente AS d
+INNER JOIN pessoa AS pPrin ON d.idpessoaPrinc = pPrin.idpessoa
+INNER JOIN pessoa AS pDepe ON d.idpessoaDepen = pDepe.idpessoa
+WHERE pDepe.cpf = ?;
+
+SELECT 
+	pDepe.cpf AS cpfpDepe
+FROM dependente AS d
+INNER JOIN pessoa AS pPrin ON d.idpessoaPrinc = pPrin.idpessoa
+INNER JOIN pessoa AS pDepe ON d.idpessoaDepen = pDepe.idpessoa
+WHERE pPrin.cpf = ?;
+
+INSERT INTO dependente(idpessoaPrinc, idpessoaDepen) 
+VALUES (?, ?);
+
+DELETE FROM dependente WHERE idpessoaPrinc = ? AND idpessoaDepen = ?;
+
+SELECT * FROM estabelecimento WHERE estabelecimento LIKE ?
+
+INSERT INTO estabelecimento(estabelecimento) VALUES (?)
+
+SELECT * FROM pessoa WHERE cpf = ?;
+
+INSERT INTO pessoa(nome, cpf, anoNascimento, salario, principal) VALUES (?, ?, ?, ?, ?);
+
+DELETE FROM pessoa WHERE cpf = ?;
+
+UPDATE pessoa SET ${opcao} = ? WHERE cpf = ?;
+
+SELECT * FROM transacao WHERE idtransacao = ?;
+
+SELECT * FROM transacao WHERE idcartao = ?;
+
+SELECT * FROM transacao WHERE idcartao = ? AND valorPendente > 0 AND idtipo = 1;
+
+SELECT * FROM transacao WHERE idcartao = ? AND valorPago > 0 AND valorPendente = 0;
+
+INSERT INTO transacao(idtipo, valor, valorPendente, valorPago, idestabelecimento, idcartao) VALUES (?, ?, ?, ?, ?, ?);
+
+UPDATE transacao SET valorPendente = ? WHERE idtransacao = ?;
+
+UPDATE transacao SET valorPago = ? WHERE idtransacao = ?
